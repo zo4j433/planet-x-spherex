@@ -170,7 +170,7 @@ ChatGPT and OpenAI Codex were used to support brainstorming, technical research,
 
 ### Acknowledgments & References
 
-We thank the NASA SPHEREx mission team and NASA/IPAC IRSA for the observation data, archive services, and technical documentation that support this project. SPHEREx is a joint project of the Jet Propulsion Laboratory and the California Institute of Technology, funded by NASA. This is an independent NASA Space Apps project.
+This work makes use of data products from the Spectro-Photometer for the History of the Universe, Epoch of Reionization and Ices Explorer (SPHEREx), which is a joint project of the Jet Propulsion Laboratory and the California Institute of Technology, and is funded by the National Aeronautics and Space Administration. The project is part of the NASA Space Apps Challenge Universal Event 2026.
 
 - [NASA SPHEREx Mission](https://science.nasa.gov/mission/spherex/)
 - [NASA/IPAC IRSA: SPHEREx Data Access and Data Credits](https://irsa.ipac.caltech.edu/Missions/spherex.html)
