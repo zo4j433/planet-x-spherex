@@ -165,7 +165,7 @@ Deployment and phase reports record earlier verification runs. For current local
 
 ### AI-Assisted Development
 
-ChatGPT and OpenAI Codex were used to support brainstorming, technical research, software development, debugging, testing, and documentation. The project team directed the implementation, reviewed the results, and validated the application's functionality. Scientific observations are sourced from NASA/IPAC IRSA SPHEREx data products.
+ChatGPT and OpenAI Codex were used to support technical research, software development, debugging, testing, and documentation. The project team directed the designs of key features and implementation, reviewed the results, and validated the application's functionality. Scientific observations are sourced from NASA/IPAC IRSA SPHEREx data products.
 
 
 ### Acknowledgments & References
