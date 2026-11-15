@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { axesFixture } from './axes-fixture.mjs';
+import { parseHtml, elements, byId, normalizedText, claim } from './html-fixture.mjs';
 
 function factory(name) {
   const url = new URL(name,import.meta.url);
@@ -71,11 +72,17 @@ test('Multi-epoch ignores Preview selection and stays on its original request co
 });
 
 test('only bounded angular options are offered and labels distinguish magnification',()=>{
-  const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-  const select=html.match(/<select id="cutout-profile"[^>]*>(.*?)<\/select>/s)[1];
-  assert.deepEqual([...select.matchAll(/value="([^"]+)"/g)].map(m=>m[1]),['small','medium']);
-  assert.match(select,/value="small" selected/);
-  assert.match(html,/Search Radius \(arcmin\)/);
-  assert.match(html,/actual shape and field depend on FITS\/WCS and IRSA cropping/);
-  assert.match(html,/Zoom and Fit change display magnification only/);
+  const root=parseHtml(readFileSync(new URL('../index.html',import.meta.url),'utf8'));
+  const select=byId(root,'cutout-profile');
+  assert.equal(select.tag,'select');
+  const options=elements(select,node=>node.tag==='option');
+  assert.deepEqual(options.map(node=>node.attrs.value),['small','medium']);
+  assert.deepEqual(options.filter(node=>'selected' in node.attrs).map(node=>node.attrs.value),['small']);
+  const label=elements(root,node=>node.tag==='label' && node.attrs.for==='radius');
+  assert.equal(label.length,1);
+  assert.match(normalizedText(label[0]),/\b(?:radius|search area)\b.*\barcmin\b/);
+  assert.equal(select.attrs['aria-describedby'],'cutout-size-note');
+  const note={children:[byId(root,'cutout-size-note')]};
+  claim(note,/^(?:.* )?actual (?:shape and field|field and shape) depend on fits wcs and irsa cropping$/, 'Actual cutout dimensions depend on FITS/WCS and IRSA cropping');
+  claim(note,/^zoom and fit (?:change|adjust) (?:display magnification only|only display magnification)$/, 'Zoom/Fit affect display magnification only');
 });

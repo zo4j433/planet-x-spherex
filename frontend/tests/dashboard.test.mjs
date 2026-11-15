@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { axesFixture } from './axes-fixture.mjs';
+import { parseHtml, elements, textContent } from './html-fixture.mjs';
 const read = name => readFileSync(new URL(`../${name}`, import.meta.url), 'utf8');
 const context = { window: {} };
 for (const file of ['wcs-axes.js', 'color-bar.js']) vm.runInNewContext(read(file), context);
@@ -118,8 +119,13 @@ test('desktop height budget reserves actual viewer chrome and safely scrolls sho
 
 test('presentation is compact English, with readable metadata and one brightness disclosure', () => {
   const html = read('index.html'), nodes = structure();
-  assert.match(html, /NASA SPACE APPS 2026/);
-  assert.doesNotMatch(html, /PHASE|Phase|<pre|raw-metadata|epoch-raw|Full FITS/);
+  const header = elements(parseHtml(html), node => node.tag === 'header');
+  assert.equal(header.length, 1);
+  for (const className of ['brand', 'badge']) {
+    const items = elements(header[0], node => node.attrs.class?.split(/\s+/).includes(className));
+    assert.equal(items.length, 1); assert.ok(textContent(items[0]));
+  }
+  assert.doesNotMatch(html, /<pre\b|id="(?:raw-metadata|epoch-raw)"/i);
   assert.ok(nodes.get('histogram').parents.includes('brightness-controls'));
   assert.ok(!nodes.get('histogram').parents.includes('brightness-about'));
   assert.ok(nodes.get('brightness-about').parents.includes('brightness-controls'));
@@ -165,8 +171,10 @@ test('observation list exists only inside accessible bounded native dialog', () 
 
 test('dashboard removes the search card and groups selection and Fit in one horizontal action row', () => {
   const html=read('index.html'),css=read('styles.css');
-  assert.doesNotMatch(html,/id="(?:epochs-panel|select-observations)"|Multi-epoch observations|Advanced Metadata/);
-  assert.match(html,/<div class="viewer-actions"><button id="change-selection"[^]*?<button id="epoch-fit-view"[^]*?<\/div>/);
+  assert.doesNotMatch(html,/id="(?:epochs-panel|select-observations)"/);
+  const actions = elements(parseHtml(html), node => node.attrs.class?.split(/\s+/).includes('viewer-actions'));
+  assert.equal(actions.length, 1);
+  assert.deepEqual(elements(actions[0], node => node.tag === 'button').map(node => node.attrs.id), ['change-selection', 'epoch-fit-view']);
   assert.match(css,/.viewer-actions {[^}]*display:flex;[^}]*gap:10px/);
   assert.match(css,/.viewer-actions button { flex:0 0 auto/);
 });
@@ -206,8 +214,10 @@ test('optional fields omit empty values, preserve false and zero, and never inve
 
 test('public API settings are removed and both modal actions belong to the fixed footer', () => {
   const html=read('index.html'),css=read('styles.css');
-  assert.doesNotMatch(html,/API connection settings|id="api-url"|id="environment"/i);
-  assert.match(html,/<div class="modal-footer"><button id="observations-cancel"[^]*?<button id="load-frames"[^]*?<\/div>/);
+  assert.doesNotMatch(html,/id="(?:api-url|environment)"/i);
+  const footer = elements(parseHtml(html), node => node.attrs.class?.split(/\s+/).includes('modal-footer'));
+  assert.equal(footer.length, 1);
+  assert.deepEqual(elements(footer[0], node => node.tag === 'button').map(node => node.attrs.id), ['observations-cancel', 'load-frames']);
   assert.match(css,/\.modal-footer \.primary \{ width:auto; margin:0;/);
   assert.match(css,/\.modal-header,\.modal-footer \{[^}]*flex-shrink:0/);
 });

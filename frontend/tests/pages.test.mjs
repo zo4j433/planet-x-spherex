@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
 import { createStaticServer, siteFiles, projectPath } from '../tools/static-site.mjs';
+import { parseHtml, elements } from './html-fixture.mjs';
 
 test('Pages artifact contains only public files; all assets load under root and project path', async t => {
   const build = spawnSync(process.execPath, [fileURLToPath(new URL('../tools/build-pages.mjs', import.meta.url))], { encoding: 'utf8', windowsHide: true });
@@ -28,17 +29,23 @@ test('Pages artifact contains only public files; all assets load under root and 
     const response = await fetch(page);
     assert.equal(response.status, 200);
     const html = await response.text();
+    const links = elements(parseHtml(html), node => node.tag === 'a');
     assert.doesNotMatch(html, /<base\b/i);
     const assets = [...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(match => match[1]);
     assert.ok(assets.includes('./epochs.js'));
     assert.ok(assets.indexOf('./config.js') < assets.indexOf('./app.js'));
     for (const asset of assets) {
       if (['https://spherex.caltech.edu', 'https://irsa.ipac.caltech.edu/Missions/spherex.html'].includes(asset)) {
-        assert.ok(html.includes('href="' + asset + '" target="_blank" rel="noopener noreferrer"'));
+        const link = links.find(node => node.attrs.href === asset);
+        assert.equal(link?.attrs.target, '_blank');
+        const rel = new Set(link.attrs.rel?.split(/\s+/));
+        assert.ok(rel.has('noopener') && rel.has('noreferrer'));
         continue; // Official navigation links are never fetched offline.
       }
       if (asset === 'https://caltech-ipac.github.io/irsa-tutorials/spherex-intro/') {
-        assert.match(html, /<a href="https:\/\/caltech-ipac.github.io\/irsa-tutorials\/spherex-intro\/" target="_blank" rel="noopener">/);
+        const link = links.find(node => node.attrs.href === asset);
+        assert.equal(link?.attrs.target, '_blank');
+        assert.ok(link.attrs.rel?.split(/\s+/).includes('noopener'));
         continue; // Documentation link, never fetched by this offline test.
       }
       assert.ok(asset.startsWith('./'), `Asset must be relative: ${asset}`);
