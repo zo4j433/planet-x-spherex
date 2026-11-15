@@ -64,7 +64,7 @@ test('search uses shared coordinates and detectors array, never loads FITS autom
   assert.equal(s.calls.length, 1); assert.match(s.calls[0].url, /epochs\/search$/);
   assert.match(s.e['epochs-sources'].textContent, /partial.*truncated.*Search incomplete/);
   assert.match(s.e['epoch-products'].children[0].children[1].textContent, /2023-/);
-  assert.match(s.e['epoch-products'].children[0].children[4].children[0].children[1].textContent, /early.*not_requested/);
+  assert.match(s.e['epoch-products'].children[0].children[4].children[0].children[1].textContent, /early.*not requested/);
   assert.equal(s.e['preview-panel'].hidden, true);
 });
 
@@ -101,7 +101,7 @@ test('comparable sequence keeps a shared Color Bar through playback, zoom and mo
   const s = setup({ mode: 'comparable_visualization', normalization: commonNormalization, frameNormalization: frameMap });
   await s.submit(); s.quick(3); await s.load();
   const ticks = colorTicks(s), ramp = Array.from(colorBody(s).children[0].frame.data), fetches = s.calls.length;
-  assert.match(s.e['epoch-scale-note'].textContent, /Shared mapping.*not photometry/);
+  assert.match(s.e['epoch-scale-note'].textContent, /^Asinh \(10x\)$/);
   s.e['epoch-play'].events.click(); s.intervals.values().next().value.fn();
   assert.deepEqual(colorTicks(s), ticks); assert.deepEqual(Array.from(colorBody(s).children[0].frame.data), ramp);
   s.e['epoch-zoom'].value = '32'; s.e['epoch-zoom'].events.input(); assert.deepEqual(colorTicks(s), ticks);
@@ -118,7 +118,7 @@ test('browse Color Bar follows each physical range and stretch in sorted timelin
   await s.submit(); s.quick(2); await s.load();
   assert.match(s.e['epoch-current'].textContent, /slot 1/);
   assert.deepEqual(colorTicks(s), ['0', '1', '2', '3', '4']);
-  assert.match(s.e['epoch-scale-note'].textContent, /Linear.*Per-frame.*do not compare brightness/);
+  assert.match(s.e['epoch-scale-note'].textContent, /^Linear$/);
   const wcs = JSON.stringify(s.e['epoch-axes'].children), fetches = s.calls.length;
   s.e['epoch-next'].events.click();
   assert.deepEqual(colorTicks(s), ['-2', '0', '2', '4', '6']);
@@ -157,10 +157,10 @@ test('English epoch states, missing metadata and image descriptions preserve seq
   assert.match(s.e['epochs-status'].textContent, /Found 2 products/);
   s.quick(2); await s.load();
   assert.match(s.e['epoch-selection'].textContent, /Selected 2 \/ 3/);
-  assert.match(s.e['epoch-image'].children[0].alt, /PNG reprojected to WCS by the backend/);
+  assert.match(s.e['epoch-image'].children[0].alt, /Aligned observation/);
   assert.match(s.e['sequence-details'].textContent, /offline playback/);
-  assert.match(s.e['epochs-status'].textContent, /Retained 2 slots; loaded 2 PNGs/);
-  assert.match(s.e['sequence-mode'].textContent, /observation_browse/);
+  assert.match(s.e['epochs-status'].textContent, /Loaded 2 of 2 frames. Ready to explore/);
+  assert.match(s.e['sequence-mode'].textContent, /Observations aligned on a common sky grid/);
   assert.equal(s.e['epoch-raw'], undefined);
   for (const id of ['epochs-status', 'epochs-sources', 'epoch-selection', 'sequence-details', 'sequence-mode', 'epoch-current']) {
     assert.doesNotMatch(s.e[id].textContent, /\p{Script=Han}/u, id);
@@ -189,7 +189,7 @@ test('play, pause, speed, slider and zoom reuse loaded PNG nodes with zero extra
   s.e['epoch-zoom'].value = '20'; s.e['epoch-zoom'].events.input();
   assert.equal(s.e['epoch-image'].children[0].style.width, '580px');
   assert.equal(s.calls.length, count); assert.deepEqual(s.urls, nodes);
-  assert.match(s.e['sequence-mode'].textContent, /observation_browse.*do not compare brightness or infer variability/);
+  assert.match(s.e['sequence-mode'].textContent, /Observations aligned on a common sky grid/);
   s.e['epoch-play'].events.click(); s.e['explorer-mode'].value = 'preview'; s.e['explorer-mode'].events.change();
   assert.equal(s.intervals.size, 0); assert.equal(s.e['preview-panel'].hidden, false);
   assert.equal(s.timeouts.size, 0);
@@ -206,9 +206,31 @@ test('all failed slots stay visible and playback disabled', async () => {
   const s = setup({ allFailed: true }); await s.submit(); s.choose('early'); s.choose('late'); await s.load();
   assert.equal(s.e['epoch-slots'].children.length, 2); assert.equal(s.e['epoch-play'].disabled, true); assert.equal(s.calls.length, 2);
 });
-test('comparable visualization remains explicitly non-photometric', async () => {
+test('shared scale is clear without repeating the analysis scope note', async () => {
   const s = setup({ mode: 'comparable_visualization' }); await s.submit(); s.choose('early'); s.choose('late'); await s.load();
-  assert.match(s.e['sequence-mode'].textContent, /comparable_visualization.*shared brightness range.*not a photometric/);
+  assert.match(s.e['sequence-mode'].textContent, /Observations aligned on a common sky grid/);
+  assert.equal(s.e['sequence-warning'].textContent, 'Shared brightness scale.');
+  assert.doesNotMatch(s.e['sequence-mode'].textContent, /comparable_visualization|photometr/);
+});
+
+test('general analysis scope stays in Details while incompatibilities and unknown warnings stay visible', async () => {
+  const general = 'Visualization only; target bandpass is not full-field equivalence. No PSF/background/variance correction or light-curve inference.';
+  const unusual = 'Unexpected quality condition; review this observation.';
+  const s = setup({ sequenceInfo: { wavelength_compatible:false, calibration_compatible:false, warnings:[general, unusual, unusual] },
+    frameInfo: { warnings:['Flagged region near target.', 'Flagged region near target.'], calibration:{warning:'Flagged region near target.'} } });
+  await s.submit(); s.quick(2); await s.load();
+  const main = s.e['sequence-warning'].textContent;
+  assert.match(main, /Independent brightness scales; displayed intensities are not directly comparable/);
+  assert.match(main, /Wavelengths are not compatible for direct comparison/);
+  assert.match(main, /Calibrations are not compatible for direct comparison/);
+  assert.equal(main.split(unusual).length - 1, 1);
+  assert.doesNotMatch(main, /Visualization only|PSF|photometr|infer variability/);
+  const details = s.e['sequence-metadata'].children.map(n => n.textContent).join(' ');
+  assert.match(details, /Wavelength matching applies at the target position, not across the whole image/);
+  assert.match(details, /image sharpness, background and measurement uncertainty are not corrected/);
+  assert.ok(details.includes(unusual));
+  assert.equal(s.e['epoch-frame-warnings'].textContent, 'Flagged region near target.');
+  assert.equal(s.calls.length, 4, 'wording and deduplication add no requests');
 });
 test('expired search disables loading and instructs explicit fresh search', async () => {
   const s = setup({ apiError: 'search_expired' }); await s.submit(); s.choose('early'); s.choose('late'); await s.load();
@@ -346,7 +368,7 @@ test('compact sequence summary follows frames, exposes failed slots, and hides w
   assert.deepEqual(labels(), ['Observation UTC','Detector','Wavelength (μm)','Status']);
   assert.ok(!e['epoch-summary'].children.some(n => n.textContent === 'Valid pixel count'), 'missing per-frame counts are hidden, never guessed');
   assert.equal(e['epoch-information'].hidden, false);
-  assert.match(e['sequence-warning'].textContent, /Do not compare brightness or infer variability/);
+  assert.match(e['sequence-warning'].textContent, /Independent brightness scales; displayed intensities are not directly comparable/);
   e['epoch-next'].events.click();
   assert.match(e['epoch-frame-status'].textContent, /Frame 2.*failed.*cutout_failed.*kept failure slot/);
   assert.match(e['epoch-summary'].children.at(-1).textContent, /Failed:.*kept failure slot/);
@@ -481,5 +503,5 @@ test('Multi-epoch missing compatibility and warnings never becomes a positive re
   const text=['sequence-metadata','epoch-metadata'].map(id=>s.e[id].children.map(n=>n.textContent).join(' ')).join(' ');
   assert.doesNotMatch(text,/Alignment status|compatibility|Warnings|Failure reason|Not available|Compatible|Pass|No warnings/i);
   assert.equal(s.e['sequence-metadata'].hidden,true);
-  assert.match(s.e['sequence-warning'].textContent,/Do not compare brightness or infer variability/);
+  assert.match(s.e['sequence-warning'].textContent,/Independent brightness scales; displayed intensities are not directly comparable/);
 });

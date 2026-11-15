@@ -29,7 +29,7 @@
           <small>0 &le; RA &lt; 360</small></div>
           <div class="search-field"><label for="dec">Dec (&#176;)</label>
           <input id="dec" name="dec" type="number" step="any" min="-90" max="90" value="-39.17760" required>
-          <small>-90 &lt; Dec &le; 90</small></div>
+          <small>-90 &le; Dec &le; 90</small></div>
           <div class="search-field"><label for="radius">Search Radius (arcmin)</label>
           <input id="radius" name="radius" type="number" step="any" min="0.00000000000006" max="5" value="0.6" required>
           <small>Positive values within 5</small></div>
@@ -38,14 +38,14 @@
           </div>
 
           <button id="search" class="primary" type="submit">Search NASA images <span aria-hidden="true">↗</span></button>
-          <p class="hint">Search Radius controls the SIA search area only. Preview Cutout Size sets the requested image field; Multi-epoch keeps its 3 arcmin cutouts.</p>
+          <p class="hint">Search Radius sets the search area. Cutout Size sets the Preview image field; Multi-epoch uses 3 arcmin cutouts.</p>
         </form>
         <div id="preview-display-controls">
         <details id="brightness-controls" class="control-details" hidden>
           <summary>Histogram and brightness</summary>
         <fieldset id="brightness" hidden>
           <legend>Display brightness range · MJy/sr</legend>
-          <div class="histogram-y-title">Pixel Count</div><div class="histogram-plot"><div id="histogram-y" class="histogram-y"></div><canvas id="histogram" width="640" height="140" role="img" aria-label="Histogram of all valid raw IMAGE pixels; horizontal axis: MJy/sr; vertical axis: pixel count"></canvas></div><div id="histogram-x" class="histogram-x"></div><div class="histogram-x-title">Surface Brightness (MJy/sr)</div>
+          <div class="histogram-y-title">Pixel Count</div><div class="histogram-plot"><div id="histogram-y" class="histogram-y"></div><canvas id="histogram" width="640" height="140" role="img" aria-label="Histogram of original valid pixels; horizontal axis: MJy/sr; vertical axis: pixel count"></canvas></div><div id="histogram-x" class="histogram-x"></div><div class="histogram-x-title">Surface Brightness (MJy/sr)</div>
           <p id="histogram-range" class="hint"></p>
           <label for="stretch">Stretch</label><select id="stretch"><option value="linear">Linear (default)</option><option value="asinh">Asinh (10x)</option><option value="log">Log (1000x)</option><option value="sqrt">Sqrt</option></select>
           <label for="minimum">Minimum · MJy/sr</label><input id="minimum" type="range" step="any"><input id="minimum-number" aria-label="Minimum MJy/sr" type="number" step="any">
@@ -54,8 +54,7 @@
           <button id="reset-brightness" type="button">Reset brightness</button>
           <p id="brightness-status" class="hint" role="status"></p>
           <details id="brightness-about"><summary>About brightness &amp; data quality</summary>
-          <p class="hint">The histogram includes all valid raw pixels. Brightness adjustments do not change the distribution or FITS data. Invalid pixels are transparent; FLAGS quality exclusions remain in effect. Orange indicates quality information only, not brightness.</p>
-          <p class="hint">The WCS position marks the input coordinates without correcting for proper motion. Interpret it using the coordinate reference epoch and actual observation date. The target may not be identifiable in the image.</p>
+          <p class="hint">Adjust Min/Max and Stretch to explore faint detail. The histogram shows original valid pixels. See the data quality help below for FLAGS definitions.</p>
           </details>
         </fieldset>
         </details>
@@ -79,7 +78,7 @@
           <div id="preview-frame" class="stage-frame" hidden><div id="preview-stage" class="wcs-stage" hidden><img id="preview" class="wcs-image" alt="" hidden><div id="preview-axes" class="wcs-axes" role="group"></div><div id="preview-colorbar" class="colorbar" role="group" aria-label="Surface Brightness (MJy/sr)"></div></div></div>
         </div>
         <p id="preview-scale-note" class="hint scale-note"></p>
-        <details class="viewer-help"><summary>Viewer help</summary><p class="hint">Fit includes the full image, WCS axes and Color Bar. Manual zoom changes display size only; scroll inside the viewer to inspect enlarged pixels. WCS marks the input position without correcting proper motion; use the coordinate reference epoch and observation date. The target may not be identifiable.</p></details>
+        <details class="viewer-help"><summary>Viewer help</summary><p class="hint">Fit shows the full image, sky coordinates and Color Bar. Zoom in and scroll to inspect enlarged pixels. Coordinates are shown as entered. For moving targets, check the coordinate epoch and observation date when identifying a source.</p></details>
 
       </section>
       <section id="epoch-view-panel" class="panel viewer" aria-labelledby="epoch-view-title" hidden>
@@ -91,7 +90,7 @@
         </div>
         <p id="epochs-status" role="status" aria-live="polite">Search epochs to select observations.</p><p id="epochs-sources" class="hint"></p>
         <p id="epoch-view-note" class="hint">Search and select observations, then Load frames to view a sequence.</p>
-          <div id="epoch-viewport" class="viewport" tabindex="0" aria-label="Backend PNG on a common WCS grid"><div id="epoch-frame" class="stage-frame"><div id="epoch-stage" class="wcs-stage"><div id="epoch-image"></div><div id="epoch-axes" class="wcs-axes" role="group"></div><div id="epoch-colorbar" class="colorbar" role="group" aria-label="Surface Brightness (MJy/sr)"></div></div></div></div>
+          <div id="epoch-viewport" class="viewport" tabindex="0" aria-label="Aligned observation image viewer"><div id="epoch-frame" class="stage-frame"><div id="epoch-stage" class="wcs-stage"><div id="epoch-image"></div><div id="epoch-axes" class="wcs-axes" role="group"></div><div id="epoch-colorbar" class="colorbar" role="group" aria-label="Surface Brightness (MJy/sr)"></div></div></div></div>
         <div id="epoch-player" class="player-controls" hidden>
           <div class="toolbar">
             <button id="epoch-prev" type="button">Previous</button><button id="epoch-play" type="button" aria-pressed="false">Play</button><button id="epoch-next" type="button">Next</button>
@@ -99,11 +98,11 @@
           </div>
           <label for="epoch-time">Timeline <output id="epoch-position"></output></label><input id="epoch-time" type="range" min="0" max="0" value="0" step="1">
           <p id="epoch-frame-warnings" class="hint"></p><p id="epoch-frame-status" class="hint" role="status" aria-live="polite"></p>
-          <p class="hint">Observations are unevenly spaced. Playback follows frame order, not elapsed observation time.</p>
+          <p class="hint">Frames play at a steady pace; observation intervals vary.</p>
         </div>
         <details id="epoch-brightness-controls" hidden><summary>Histogram and brightness</summary>
-          <p class="hint">Histogram: valid native IMAGE pixels before reprojection. Controls: aligned MJy/sr pixels. Shared mapping in comparison mode; independent ranges in browse mode.</p>
-          <div class="histogram-y-title">Pixel Count</div><div class="histogram-plot"><div id="epoch-histogram-y" class="histogram-y"></div><canvas id="epoch-histogram" width="640" height="140" role="img" aria-label="Histogram of valid native IMAGE values"></canvas></div><div id="epoch-histogram-x" class="histogram-x"></div><div class="histogram-x-title">Surface Brightness (MJy/sr)</div>
+          <p class="hint">The histogram shows original valid pixels before alignment. Brightness controls adjust the aligned image.</p>
+          <div class="histogram-y-title">Pixel Count</div><div class="histogram-plot"><div id="epoch-histogram-y" class="histogram-y"></div><canvas id="epoch-histogram" width="640" height="140" role="img" aria-label="Histogram of original valid pixels before alignment"></canvas></div><div id="epoch-histogram-x" class="histogram-x"></div><div class="histogram-x-title">Surface Brightness (MJy/sr)</div>
           <label for="epoch-stretch">Stretch</label><select id="epoch-stretch"><option value="asinh">Asinh (10x)</option><option value="linear">Linear</option><option value="log">Log (1000x)</option><option value="sqrt">Sqrt</option></select>
           <label for="epoch-minimum">Minimum (MJy/sr)</label><input id="epoch-minimum" type="number" step="any">
           <label for="epoch-maximum">Maximum (MJy/sr)</label><input id="epoch-maximum" type="number" step="any">
@@ -111,7 +110,7 @@
         </details>
         <p id="sequence-warning" class="hint"></p>
         <p id="epoch-scale-note" class="hint scale-note"></p>
-        <details class="viewer-help"><summary>Viewer help</summary><p class="hint">Display zoom leaves the common WCS grid and source pixels unchanged. Scroll inside the viewer at manual magnifications.</p></details>
+        <details class="viewer-help"><summary>Viewer help</summary><p class="hint">Zoom in and scroll inside the viewer to inspect enlarged pixels.</p></details>
       </section>
       <section id="preview-summary" class="panel information-panel" aria-label="Preview observation information">
         <div id="info" hidden><h2>Observation Summary</h2><dl id="observation-summary" class="summary-grid"></dl><p id="preview-warnings" class="hint" role="status"></p><details id="preview-advanced"><summary>Observation Details</summary><dl id="metadata"></dl><dl id="preview-display-details"></dl><div id="scientific-limitations" hidden><h3>Scientific limitations</h3><dl id="technical-metadata"></dl></div></details></div>
@@ -121,7 +120,7 @@
           <dl id="epoch-summary" class="summary-grid"></dl>
           <details id="epoch-advanced"><summary>Observation Details</summary>
           <p id="sequence-mode"></p>
-          <p class="hint">Observations are unevenly spaced in time. The slider follows frame order; playback speed does not represent elapsed observation time. Use for visual inspection only, not to infer variability.</p>
+          <p class="hint">Visual exploration; measuring variability requires additional photometric analysis.</p>
           <p id="sequence-details" class="hint"></p>
           <p id="epoch-current"></p>
           <ol id="epoch-slots"></ol>
@@ -135,7 +134,7 @@
         <p id="observations-help">Select 2&ndash;3 distinct exposures on the same Detector. Closing preserves your selection and the current player.</p>
         <p id="modal-status" role="status" aria-live="polite"></p><p id="modal-sources" class="hint"></p>
         <div class="epoch-table"><table><thead><tr><th>Select</th><th>Observation time (UTC / SIA)</th><th>Detector</th><th>Status</th><th>Details</th></tr></thead><tbody id="epoch-products"></tbody></table></div>
-        <button id="epochs-more" type="button" hidden>More epochs (same search snapshot)</button>
+        <button id="epochs-more" type="button" hidden>More observations</button>
         <p id="epoch-selection" class="hint">Selected 0 / 3</p>
         <div class="toolbar" role="group" aria-label="Quick selection of visible exposures">
           <button id="select-first-2" type="button" disabled>Select first 2</button>
@@ -146,12 +145,12 @@
     </dialog>
 <details id="flags-help" class="viewer-help"><summary>About brightness &amp; data quality</summary>
 
-<p>Preview excludes bits 1, 2, 6, 9, 15 and 19. Other bits are retained as quality information. Missing FLAGS means finite-only selection in Preview.</p>
-<p>Multi-epoch uses a stricter policy: only SOURCE and FULLSAMPLE masks declared by each FITS header are allowed. All other set bits, including unknown bits, exclude the pixel before reprojection. The propagated flags_or field must be interpreted with valid_mask and weights. These are project display policies, not a photometry recommendation.</p>
+<p>Preview excludes non-finite pixels and bits 1, 2, 6, 9, 15 and 19. Other bits are retained as quality information; the orange overlay marks flagged pixels, not brightness. Without FLAGS, Preview displays finite pixels, but flag-based quality checks are unavailable. Image and coordinate checks still apply.</p>
+<p>Multi-epoch requires FLAGS and its header definitions. Only SOURCE and FULLSAMPLE masks declared by each FITS header are allowed; all other set bits, including unknown bits, exclude the pixel before reprojection. Non-finite pixels are also excluded. Reprojection requires full coverage by valid input pixels; gaps remain hidden. Retained flags can include rejected input pixels and do not by themselves show whether an output pixel is valid.</p>
 <p>The definitions below are from the <a href="https://caltech-ipac.github.io/irsa-tutorials/spherex-intro/" target="_blank" rel="noopener">official IRSA image documentation</a>. Each loaded frame retains its header definitions internally; Observation Details summarizes scientific status and warnings. New or changed release definitions require verification; unlisted bits have no assumed meaning here.</p>
 <table><thead><tr><th>Bit index</th><th>Mask (1 &lt;&lt; n)</th><th>Meaning</th></tr></thead><tbody><tr><td>0</td><td>1</td><td>TRANSIENT: Transient detected during SUR</td></tr><tr><td>1</td><td>2</td><td>OVERFLOW: Overflow detected during SUR</td></tr><tr><td>2</td><td>4</td><td>SUR_ERROR: Error in onboard processing</td></tr><tr><td>6</td><td>64</td><td>NONFUNC: Permanently unusable</td></tr><tr><td>7</td><td>128</td><td>DICHROIC: Low efficiency due to dichroic</td></tr><tr><td>9</td><td>512</td><td>MISSING_DATA: Onboard data lost</td></tr><tr><td>10</td><td>1024</td><td>HOT: Hot pixel</td></tr><tr><td>11</td><td>2048</td><td>COLD: Anomalously low signal</td></tr><tr><td>12</td><td>4096</td><td>FULLSAMPLE: Pixel full sample history is available</td></tr><tr><td>14</td><td>16384</td><td>PHANMISS: Phantom correction was not applied</td></tr><tr><td>15</td><td>32768</td><td>NONLINEAR: Nonlinearity correction cannot be applied reliably</td></tr><tr><td>17</td><td>131072</td><td>PERSIST: Persistent charge above threshold</td></tr><tr><td>19</td><td>524288</td><td>OUTLIER: Pixel flagged by Detect Outliers</td></tr><tr><td>20</td><td>1048576</td><td>CROSSTALK: Pixel affected by crosstalk</td></tr><tr><td>21</td><td>2097152</td><td>SOURCE: Pixel mapped to a known source</td></tr><tr><td>22</td><td>4194304</td><td>GHOST: Affected by a bright source inside the exposure</td></tr><tr><td>23</td><td>8388608</td><td>GHOST_FPA: Affected by a bright source on another detector</td></tr><tr><td>24</td><td>16777216</td><td>GHOST_EXT: Pixel affected by a bright source outside FOV</td></tr><tr><td>25</td><td>33554432</td><td>STREAK: Pixel affected by a streak</td></tr><tr><td>26</td><td>67108864</td><td>BLOOM: Pixel part of a bloom artifact</td></tr><tr><td>27</td><td>134217728</td><td>SNOWBALL: Pixel part of a snowball artifact</td></tr><tr><td>28</td><td>268435456</td><td>HALO: Pixel part of a transient halo</td></tr></tbody></table>
-<p>Log maps the clipped fraction t = (value - Min)/(Max - Min) using log1p(1000t)/log1p(1000). It preserves zero and negative MJy/sr values. Histogram statistics use valid native pixels; Min/Max and Stretch affect display only.</p></details>
-    <footer><div>Data source: NASA / IPAC IRSA SPHEREx</div><nav class="resource-links" aria-label="Data Sources &amp; Resources"><strong>Data Sources &amp; Resources</strong><a href="https://spherex.caltech.edu" target="_blank" rel="noopener noreferrer">SPHEREx Mission</a><a href="https://irsa.ipac.caltech.edu/Missions/spherex.html" target="_blank" rel="noopener noreferrer">IRSA SPHEREx Data Access</a></nav></footer>
+<p>Log stretch brings out faint detail within the selected Min/Max range and supports zero and negative brightness values. Histograms use original valid pixels; Min/Max and Stretch change only the display.</p></details>
+    <footer><div>Data source: NASA / IPAC IRSA SPHEREx</div><nav class="resource-links" aria-label="Official resources"><a href="https://spherex.caltech.edu" target="_blank" rel="noopener noreferrer">SPHEREx Mission</a><a href="https://irsa.ipac.caltech.edu/Missions/spherex.html" target="_blank" rel="noopener noreferrer">IRSA SPHEREx Data Access</a></nav></footer>
   </main>
 </body>
 </html>

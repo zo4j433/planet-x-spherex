@@ -36,7 +36,7 @@
       "Alignment status": preview ? null : data.alignment?.status,
       "Wavelength compatibility": preview ? null : compatibility((sequence || data).wavelength_compatible),
       "Calibration compatibility": preview ? null : compatibility((sequence || data).calibration_compatible ?? data.calibration_status ?? data.calibration?.status),
-      "Warnings": [...(data.warnings || []), data.calibration?.warning, data.alignment?.reason].filter(Boolean).join("; ") || null,
+      "Warnings": [...new Set([...(data.warnings || []), data.calibration?.warning, data.alignment?.reason].filter(Boolean))].join("; ") || null,
       "Failure reason": data.error ? [data.error.code, data.error.message ?? (typeof data.error === "string" ? data.error : null)].filter(Boolean).join(": ") : null
     };
   }
@@ -140,7 +140,7 @@
   function colorBar() {
     const axes = window.SpherexAxes.layout(wcsAxes, $("preview").naturalWidth, $("preview").naturalHeight, displayPlan.factor);
     const size = window.SpherexColorBar.render($("preview-colorbar"), colorScale, axes,
-      "Transparent/masked pixels excluded. Orange FLAGS: quality only.", $("preview-scale-note"), displayPlan.stacked);
+      "", $("preview-scale-note"), displayPlan.stacked);
     view.apply(size, displayPlan);
   }
   function redrawBrightness() {
@@ -178,7 +178,7 @@
   function setupBrightness(display) {
     scienceDisplay = display?.available && window.SpherexBrightness ? display : null;
     $("brightness").hidden = !scienceDisplay; $("brightness-controls").hidden = !scienceDisplay;
-    $("display-note").textContent = scienceDisplay ? "Invalid pixels are transparent. The viewport background does not represent a valid zero value." : display?.reason || "This API provides a PNG preview only.";
+    $("display-note").textContent = scienceDisplay ? "Gaps show missing or excluded pixels, rather than zero brightness." : display?.reason || "Image preview available; brightness controls are unavailable.";
     if (!scienceDisplay) {
       colorScale = window.SpherexColorBar.preview(previewMetadata, null, mode === "white"); colorBar(); return;
     }

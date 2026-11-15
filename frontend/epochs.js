@@ -19,6 +19,12 @@
   let products = [], selected = new Set(), slots = [], position = 0, timer = null, wcsAxes = null, sequenceDisplay = null;
   const active = () => $("explorer-mode").value === "epochs";
   const sources = p => (p.source_collections || [p.obs_collection]).filter(Boolean).join(", ") || "Not available";
+  // Move only these known general scope notes into Observation Details.
+  // Unknown warnings remain visible beside the sequence.
+  const scopeWarnings = new Set([
+    "Visualization only; target bandpass is not full-field equivalence. No PSF/background/variance correction or light-curve inference."
+  ]);
+  const scopeNote = "Wavelength matching applies at the target position, not across the whole image. Differences in image sharpness, background and measurement uncertainty are not corrected.";
   const mjdTime = p => Number.isFinite(p.t_min) ? new Date((p.t_min - 40587) * 86400000).toISOString() : "Time not available";
   const date = p => p.observation_utc || mjdTime(p);
   const errorText = error => typeof error === "object" && error ? [error.code, error.message].filter(Boolean).join(": ") : String(error);
@@ -110,7 +116,7 @@
       const detailCell = document.createElement("td"), details = document.createElement("details"), heading = document.createElement("summary");
       heading.textContent = "Details";
       const description = document.createElement("p"), metadata = document.createElement("dl");
-      description.textContent = `${sources(p)} · ${p.obs_id || "Unknown exposure (unavailable for selection)"} · ${p.frame_status || "not_requested"} · ${p.calibration_status || ""} · ${(p.warnings || []).join(", ")}`;
+      description.textContent = `${sources(p)} · ${p.obs_id || "Unknown exposure (unavailable for selection)"} · ${String(p.frame_status || "not_requested").replaceAll("_", " ")} · ${p.calibration_status || ""}`;
       window.SpherexUI.fields(metadata, window.SpherexUI.details(p));
       details.append(heading, description, metadata); detailCell.append(details); tr.append(detailCell);
       $("epoch-products").append(tr);
@@ -185,9 +191,7 @@
       $("epoch-image").style.left = `${axes.margin.left}px`; $("epoch-image").style.top = `${axes.margin.top}px`;
       const range = brightnessRanges.get(rangeKey(current));
       const scale = current.image ? range ? window.SpherexColorBar.mapping({ ...range, stretch: epochStretch || "asinh", a: 10, denominator: range.hi - range.lo, unit: "MJy/sr" }) : window.SpherexColorBar.epoch(sequenceDisplay, current.frame) : null;
-      const note = sequenceDisplay?.mode === "comparable_visualization"
-        ? "Shared mapping; visual comparison only, not photometry. Transparent/masked pixels excluded."
-        : "Per-frame mapping; do not compare brightness between frames. Transparent/masked pixels excluded.";
+      const note = "";
       const size = window.SpherexColorBar.render($("epoch-colorbar"), scale, axes, note, $("epoch-scale-note"), plan.stacked);
       view.apply(size, plan);
     }
@@ -234,7 +238,7 @@
     $("epoch-position").textContent = `${position + 1} / ${slots.length} · ${date(slots[position].frame)}`;
     $("epoch-current").textContent = describe(slots[position]);
     const slot = slots[position], f = slot.frame;
-    $("epoch-frame-warnings").textContent = [...(f.warnings || []), f.alignment?.reason, f.calibration?.warning].filter(Boolean).join(" ");
+    $("epoch-frame-warnings").textContent = [...new Set([...(f.warnings || []), f.alignment?.reason, f.calibration?.warning].filter(Boolean))].join(" ");
     $("epoch-frame-status").textContent = `Frame ${position + 1} / ${slots.length} · ${f.status || "Status unavailable"}${slot.error ? ` · ${slot.error}` : ""}`;
     $("epoch-summary").replaceChildren();
     const rows = [["Observation UTC", date(f)], ["Detector", f.detector == null ? null : `D${f.detector}`],
@@ -267,7 +271,7 @@
     const path = new URL(frame.image_url, base).pathname;
     if (path !== `/api/epoch-frames/${sequenceId}/${frame.index}.png` || !/^[0-9a-f]{32}$/.test(sequenceId)) throw Error("The API returned an invalid frame PNG path.");
     const blob = await request(path, null, true), url = URL.createObjectURL(blob), img = document.createElement("img");
-    img.alt = `PNG reprojected to WCS by the backend · ${date(frame)} · ${frame.obs_id}`;
+    img.alt = `Aligned observation · ${date(frame)} · ${frame.obs_id}`;
     try {
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => { cleanup(); reject(Error("PNG decoding timed out. Search again.")); }, 30000);
@@ -317,23 +321,26 @@
       $("change-selection").hidden = false;
       closeSelection();
       slots.sort((a, b) => order(a.frame, b.frame));
-      $("sequence-mode").textContent = data.mode === "comparable_visualization" ? "comparable_visualization · The backend permits visual comparison using a shared brightness range. This is not a photometric sequence." : "observation_browse · Each frame uses its own brightness range. For observation browsing only; do not compare brightness or infer variability.";
-      $("sequence-warning").textContent = data.mode === "comparable_visualization"
-        ? "Shared brightness range for visual comparison only; not a photometric sequence."
-        : "Each frame uses its own brightness range. Do not compare brightness or infer variability.";
-      if (data.warnings?.length) $("sequence-warning").textContent += ` ${data.warnings.join(" ")}`;
+      $("sequence-mode").textContent = "Observations aligned on a common sky grid.";
+      $("sequence-warning").textContent = [...new Set([
+        data.mode === "comparable_visualization" ? "Shared brightness scale."
+          : "Independent brightness scales; displayed intensities are not directly comparable.",
+        data.wavelength_compatible === false ? "Wavelengths are not compatible for direct comparison." : "",
+        data.calibration_compatible === false ? "Calibrations are not compatible for direct comparison." : "",
+        ...(data.warnings || []).filter(warning => !scopeWarnings.has(warning))
+      ].filter(Boolean))].join(" ");
       $("sequence-details").textContent = "Loaded frames remain available for offline playback. Search again if a new selection has expired.";
       window.SpherexUI.fields($("sequence-metadata"), {
         "Wavelength compatibility": data.wavelength_compatible == null ? null : data.wavelength_compatible ? "Compatible" : "Not compatible",
         "Calibration compatibility": data.calibration_compatible == null ? null : data.calibration_compatible ? "Compatible" : "Not compatible",
-        "Warnings": data.warnings?.length ? data.warnings : null
+        "Warnings": data.warnings?.length ? [...new Set(data.warnings.map(warning => scopeWarnings.has(warning) ? scopeNote : warning))] : null
       });
       $("epoch-slots").replaceChildren();
       slots.forEach(slot => { const li = document.createElement("li"); li.textContent = describe(slot); $("epoch-slots").append(li); });
       $("epoch-time").max = String(slots.length - 1); $("epoch-player").hidden = false; $("epoch-frame").hidden = false; $("epoch-view-note").hidden = true;
       $("epoch-information").hidden = !active();
       $("epoch-play").disabled = !slots.some(s => s.image); show(0);
-      status(`Retained ${slots.length} slots; loaded ${slots.filter(s => s.image).length} PNGs. Playback and scrubbing make no additional requests.`);
+      status(`Loaded ${slots.filter(s => s.image).length} of ${slots.length} frames. Ready to explore.`);
     } catch (error) {
       if (error.code === "search_expired") { snapshot = null; cursor = null; }
       status(message(error), true);

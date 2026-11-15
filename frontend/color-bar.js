@@ -110,7 +110,7 @@
         tick.textContent = format(fraction === 1 ? scale.hi : scale.lo + (scale.hi - scale.lo) * fraction, scale);
         body.append(tick);
       }
-      const explanation = `${scale.stretch === "asinh" ? `Asinh (${scale.a}x)` : scale.stretch === "log" ? "Log (1000x)" : scale.stretch === "sqrt" ? "Sqrt" : "Linear"}${scale.inverse ? "; inverted" : ""}. ${note}`;
+      const explanation = `${scale.stretch === "asinh" ? `Asinh (${scale.a}x)` : scale.stretch === "log" ? "Log (1000x)" : scale.stretch === "sqrt" ? "Sqrt" : "Linear"}${scale.inverse ? "; inverted" : ""}${note ? `. ${note}` : ""}`;
       if (noteHost) noteHost.textContent = explanation;
       else add("p", "colorbar-note", explanation);
     }
