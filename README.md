@@ -140,11 +140,6 @@ node frontend/tools/serve.mjs --epochs-fixture --scenario=browse
 
 Switch to **Multi-epoch**, search, select frames, and choose **Load frames**. This mode works without downloaded observations. `browse` loads all selected frames with independent brightness ranges; `comparable` simulates the shared-scale interface. Omitting `--scenario` selects `failed`, which demonstrates a partially failed sequence. More scenarios are documented in the [Multi-epoch UI technical report](frontend/phase4-5-report.md); use the current startup URLs above.
 
-### Real Multi-epoch Research Data
-
-Local `research/outputs/phase4-2/` holds real SPHEREx FITS files and research comparison plots. These diagnostics are separate from the synthetic player fixtures, which do not replay that research dataset as a complete observation sequence. See the tracked [research report](research/phase4-2/REPORT.md) and [summary snapshot](research/phase4-2/snapshot-summary.json).
-
-Fixture tools, test source code, and research summaries are tracked in Git. Downloaded FITS, generated research outputs, and browser-test screenshots are ignored; this README's selected screenshots are included in `docs/images/`.
 
 ## Limitations & Future Work
 
