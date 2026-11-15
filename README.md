@@ -172,9 +172,9 @@ ChatGPT and OpenAI Codex were used to support brainstorming, technical research,
 
 This work makes use of data products from the Spectro-Photometer for the History of the Universe, Epoch of Reionization and Ices Explorer (SPHEREx), which is a joint project of the Jet Propulsion Laboratory and the California Institute of Technology, and is funded by the National Aeronautics and Space Administration. The project is part of the NASA Space Apps Challenge Universal Event 2026.
 
-SPHEREx Team (2026). "SPHEREx Data Release 1 (DR1) Spectral Images", IPAC, Dataset. https://doi.org/10.26131/IRSA678
-SPHEREx Team (2026). "SPHEREx Data Release 1 (DR1) Spectral All-Sky Cube", IPAC, Dataset. https://doi.org/10.26131/IRSA679
-SPHEREx Team (2026). "SPHEREx Quick Release Spectral Images - QR3", IPAC, Dataset. https://doi.org/10.26131/IRSA662
+- SPHEREx Team (2026). "SPHEREx Data Release 1 (DR1) Spectral Images", IPAC, Dataset. https://doi.org/10.26131/IRSA678
+- SPHEREx Team (2026). "SPHEREx Data Release 1 (DR1) Spectral All-Sky Cube", IPAC, Dataset. https://doi.org/10.26131/IRSA679
+- SPHEREx Team (2026). "SPHEREx Quick Release Spectral Images - QR3", IPAC, Dataset. https://doi.org/10.26131/IRSA662
 
 - [NASA SPHEREx Mission](https://science.nasa.gov/mission/spherex/)
 - [NASA/IPAC IRSA: SPHEREx Data Access and Data Credits](https://irsa.ipac.caltech.edu/Missions/spherex.html)
