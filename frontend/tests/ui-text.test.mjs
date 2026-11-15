@@ -18,9 +18,15 @@ test('public science help distinguishes missing quality data and preserves maski
   assert.match(help, /Retained flags can include rejected input pixels/);
   assert.match(help, /do not by themselves show whether an output pixel is valid/);
   assert.doesNotMatch(help, /not a photometry recommendation/);
-  assert.match(help, /Log stretch brings out faint detail/);
-  assert.match(help, /supports zero and negative brightness values/);
-  assert.match(help, /Histograms use original valid pixels; Min\/Max and Stretch change only the display/);
+  assert.match(help, /<summary>About brightness &amp; data quality<\/summary>/);
+  const brightness = help.match(/<p>Log stretch\b[^<]*<\/p>/)?.[0];
+  assert.ok(brightness, 'Data quality help must include a Log stretch explanation');
+  assert.match(brightness, /Log stretch supports zero and negative brightness values/);
+  assert.match(brightness, /Histograms use original valid pixels/);
+  assert.match(brightness, /Min\/Max and Stretch change (?:only the display|the display only)/);
+  const brightnessAbout = html.match(/<details id="brightness-about"[^]*?<\/details>/)?.[0];
+  assert.ok(brightnessAbout, 'Brightness controls must include their help section');
+  assert.match(brightnessAbout, /Adjust Min\/Max and Stretch to explore faint detail/);
   assert.doesNotMatch(help, /finite-only|flags_or|valid_mask|weights|log1p|1000t/);
 });
 
